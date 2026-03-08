@@ -4,11 +4,14 @@ import {
   TextInput, ActivityIndicator, Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { apiRequest } from "@/lib/query-client";
 import { useUserData } from "@/context/UserDataContext";
+import { usePayment } from "@/context/PaymentContext";
+import { TrialBanner } from "@/components/TrialBanner";
 import Colors from "@/constants/colors";
 
 const C = Colors.dark;
@@ -30,7 +33,9 @@ const IMP_COLORS = { high: "#EF4444", medium: "#F59E0B", low: "#10B981" };
 
 export default function CodeAnalyzerScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { incrementAnalyzer, addActivity } = useUserData();
+  const payment = usePayment() as any;
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("JavaScript");
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +46,8 @@ export default function CodeAnalyzerScreen() {
 
   const analyze = async () => {
     if (!code.trim()) { setError("Paste your code to analyze"); return; }
+    const allowed = await payment.checkAndConsumerial();
+    if (!allowed) { router.push("/paywall" as any); return; }
     setIsLoading(true);
     setError("");
     setResult(null);
@@ -79,6 +86,7 @@ export default function CodeAnalyzerScreen() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
+      <TrialBanner />
       {/* Language Selector */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.langRow}>
         {LANGUAGES.map((l) => (

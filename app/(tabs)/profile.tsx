@@ -1,19 +1,23 @@
 import React from "react";
-import { View, Text, Pressable, ScrollView, StyleSheet, Platform, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView, StyleSheet, Platform, Alert, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/context/AuthContext";
 import { useUserData } from "@/context/UserDataContext";
+import { usePayment } from "@/context/PaymentContext";
 import Colors from "@/constants/colors";
 
 const C = Colors.dark;
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { user, logout } = useAuth();
   const { stats } = useUserData();
+  const payment = usePayment() as any;
   const topInset = Platform.OS === "web" ? 67 : insets.top;
   const bottomInset = Platform.OS === "web" ? 34 : 0;
 
@@ -57,6 +61,34 @@ export default function ProfileScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Premium Status Card */}
+        {payment.isPremium ? (
+          <View style={styles.premiumCard}>
+            <Ionicons name="diamond" size={20} color="#7C3AED" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.premiumTitle}>Premium Member</Text>
+              <Text style={styles.premiumSub}>Unlimited access to all AI tools</Text>
+            </View>
+            <View style={styles.premiumBadge}>
+              <Text style={styles.premiumBadgeText}>ACTIVE</Text>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.upgradeCard} onPress={() => router.push("/paywall" as any)}>
+            <View style={styles.upgradeLeft}>
+              <Ionicons name="diamond-outline" size={20} color="#F59E0B" />
+              <View>
+                <Text style={styles.upgradeTitle}>Upgrade to Premium</Text>
+                <Text style={styles.upgradeSub}>{payment.trialRemaining} free trial{payment.trialRemaining !== 1 ? "s" : ""} remaining</Text>
+              </View>
+            </View>
+            <View style={styles.upgradeCta}>
+              <Text style={styles.upgradeCtaText}>Upgrade</Text>
+              <Ionicons name="chevron-forward" size={14} color="#7C3AED" />
+            </View>
+          </TouchableOpacity>
+        )}
 
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
@@ -137,4 +169,15 @@ const styles = StyleSheet.create({
   actionsSection: { paddingHorizontal: 20 },
   signOutBtn: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: C.accentRed + "15", borderRadius: 14, padding: 16, borderWidth: 1, borderColor: C.accentRed + "30" },
   signOutText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: C.accentRed },
+  premiumCard: { flexDirection: "row", alignItems: "center", gap: 12, marginHorizontal: 20, marginBottom: 20, backgroundColor: "#7C3AED15", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#7C3AED40" },
+  premiumTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: C.text },
+  premiumSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: C.textSecondary, marginTop: 2 },
+  premiumBadge: { backgroundColor: "#10B981", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  premiumBadgeText: { fontSize: 10, fontFamily: "Inter_700Bold", color: "#fff", letterSpacing: 0.5 },
+  upgradeCard: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginHorizontal: 20, marginBottom: 20, backgroundColor: "#F59E0B10", borderRadius: 16, padding: 16, borderWidth: 1, borderColor: "#F59E0B30" },
+  upgradeLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  upgradeTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: C.text },
+  upgradeSub: { fontSize: 12, fontFamily: "Inter_400Regular", color: C.textSecondary, marginTop: 2 },
+  upgradeCta: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#7C3AED20", paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: "#7C3AED40" },
+  upgradeCtaText: { fontSize: 12, fontFamily: "Inter_700Bold", color: "#7C3AED" },
 });

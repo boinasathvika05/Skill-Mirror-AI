@@ -15,6 +15,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { UserDataProvider } from "@/context/UserDataContext";
+import { PaymentProvider } from "@/context/PaymentContext";
 import { StatusBar } from "expo-status-bar";
 
 SplashScreen.preventAutoHideAsync();
@@ -27,10 +28,24 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
     const inAuth = segments[0] === "(auth)";
+    const inAdmin = segments[0] === "(admin)";
+
     if (!user && !inAuth) {
       router.replace("/(auth)/login");
-    } else if (user && inAuth) {
-      router.replace("/(tabs)");
+    } else if (user) {
+      if (user.isAdmin) {
+        // Admin goes to admin dashboard, blocked from regular tabs
+        if (!inAdmin) {
+          router.replace("/(admin)");
+        }
+      } else {
+        // Regular users cannot access admin
+        if (inAdmin) {
+          router.replace("/(tabs)");
+        } else if (inAuth) {
+          router.replace("/(tabs)");
+        }
+      }
     }
   }, [user, isLoading, segments]);
 
@@ -44,7 +59,9 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ presentation: "modal", headerShown: false }} />
+        <Stack.Screen name="(admin)" options={{ headerShown: false }} />
         <Stack.Screen name="tools" options={{ headerShown: false }} />
+        <Stack.Screen name="paywall" options={{ presentation: "modal", headerShown: false }} />
       </Stack>
     </>
   );
@@ -73,9 +90,11 @@ export default function RootLayout() {
           <KeyboardProvider>
             <AuthProvider>
               <UserDataProvider>
-                <AuthGate>
-                  <RootLayoutNav />
-                </AuthGate>
+                <PaymentProvider>
+                  <AuthGate>
+                    <RootLayoutNav />
+                  </AuthGate>
+                </PaymentProvider>
               </UserDataProvider>
             </AuthProvider>
           </KeyboardProvider>

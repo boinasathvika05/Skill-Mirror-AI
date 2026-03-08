@@ -3,12 +3,15 @@ import {
   View, Text, Pressable, ScrollView, StyleSheet,
   TextInput, ActivityIndicator, Platform,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { apiRequest } from "@/lib/query-client";
 import { useUserData } from "@/context/UserDataContext";
+import { usePayment } from "@/context/PaymentContext";
+import { TrialBanner } from "@/components/TrialBanner";
 import Colors from "@/constants/colors";
 
 const C = Colors.dark;
@@ -32,7 +35,9 @@ const IMP_COLORS: Record<string, string> = { critical: C.accentRed, high: C.acce
 
 export default function CareerAdvisorScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { addActivity } = useUserData();
+  const payment = usePayment() as any;
   const [resume, setResume] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<CareerResult | null>(null);
@@ -42,6 +47,8 @@ export default function CareerAdvisorScreen() {
 
   const analyze = async () => {
     if (!resume.trim()) { setError("Paste your resume to get career advice"); return; }
+    const allowed = await payment.checkAndConsumerial();
+    if (!allowed) { router.push("/paywall" as any); return; }
     setIsLoading(true);
     setError("");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -66,6 +73,7 @@ export default function CareerAdvisorScreen() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
+      <TrialBanner />
       {/* Intro */}
       <View style={styles.introCard}>
         <View style={styles.introIcon}>

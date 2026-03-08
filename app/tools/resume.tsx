@@ -3,12 +3,15 @@ import {
   View, Text, Pressable, ScrollView, StyleSheet,
   TextInput, ActivityIndicator, Platform,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { apiRequest } from "@/lib/query-client";
 import { useUserData } from "@/context/UserDataContext";
+import { usePayment } from "@/context/PaymentContext";
+import { TrialBanner } from "@/components/TrialBanner";
 import Colors from "@/constants/colors";
 
 const C = Colors.dark;
@@ -39,7 +42,9 @@ const VERDICT_COLORS: Record<string, string> = {
 
 export default function ResumeScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { incrementResume, addActivity } = useUserData();
+  const payment = usePayment() as any;
   const [resume, setResume] = useState("");
   const [targetRole, setTargetRole] = useState("Software Engineer");
   const [targetCompany, setTargetCompany] = useState("Google");
@@ -51,6 +56,8 @@ export default function ResumeScreen() {
 
   const analyze = async () => {
     if (!resume.trim()) { setError("Paste your resume content"); return; }
+    const allowed = await payment.checkAndConsumerial();
+    if (!allowed) { router.push("/paywall" as any); return; }
     setIsLoading(true);
     setError("");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -85,6 +92,7 @@ export default function ResumeScreen() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
+      <TrialBanner />
       {/* Role */}
       <View style={styles.section}>
         <Text style={styles.label}>Target Role</Text>

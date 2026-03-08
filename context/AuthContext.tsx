@@ -2,10 +2,11 @@ import React, { createContext, useContext, useState, useEffect, useMemo, ReactNo
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiRequest } from "@/lib/query-client";
 
-interface AuthUser {
+export interface AuthUser {
   id: string;
   username: string;
   displayName: string;
+  isAdmin: boolean;
 }
 
 interface AuthContextValue {
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password: string) => {
     const res = await apiRequest("POST", "/api/auth/login", { username, password });
     const data = await res.json();
+    if (data.error) throw new Error(data.error);
     await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(data));
     setUser(data);
   };
@@ -44,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (username: string, password: string, displayName: string) => {
     const res = await apiRequest("POST", "/api/auth/register", { username, password, displayName });
     const data = await res.json();
+    if (data.error) throw new Error(data.error);
     await AsyncStorage.setItem(AUTH_KEY, JSON.stringify(data));
     setUser(data);
   };

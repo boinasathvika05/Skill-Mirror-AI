@@ -3,13 +3,15 @@ import {
   View, Text, Pressable, ScrollView, StyleSheet,
   TextInput, ActivityIndicator, Platform,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { apiRequest } from "@/lib/query-client";
 import { useUserData } from "@/context/UserDataContext";
+import { usePayment } from "@/context/PaymentContext";
+import { TrialBanner } from "@/components/TrialBanner";
 import Colors from "@/constants/colors";
 
 const C = Colors.dark;
@@ -42,8 +44,10 @@ const GRADE_COLORS: Record<string, string> = {
 
 export default function CodingFeedbackScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const params = useLocalSearchParams<{ problem?: string; description?: string }>();
   const { addActivity, markDSASolved } = useUserData();
+  const payment = usePayment() as any;
   const [problem, setProblem] = useState(params.problem || "");
   const [problemDesc, setProblemDesc] = useState(params.description || "");
   const [code, setCode] = useState("");
@@ -59,6 +63,8 @@ export default function CodingFeedbackScreen() {
       setError("Problem name and code are required");
       return;
     }
+    const allowed = await payment.checkAndConsumerial();
+    if (!allowed) { router.push("/paywall" as any); return; }
     setIsLoading(true);
     setError("");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -89,6 +95,7 @@ export default function CodingFeedbackScreen() {
       keyboardShouldPersistTaps="handled"
     >
       <View style={{ height: 16 }} />
+      <TrialBanner />
 
       {/* Problem Input */}
       <View style={styles.inputGroup}>

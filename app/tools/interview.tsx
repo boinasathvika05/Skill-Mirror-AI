@@ -3,12 +3,14 @@ import {
   View, Text, Pressable, ScrollView, StyleSheet,
   TextInput, ActivityIndicator, Platform, FlatList, KeyboardAvoidingView,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { apiRequest } from "@/lib/query-client";
 import { useUserData } from "@/context/UserDataContext";
+import { usePayment } from "@/context/PaymentContext";
 import Colors from "@/constants/colors";
 
 const C = Colors.dark;
@@ -33,7 +35,9 @@ interface InterviewResponse {
 
 export default function InterviewScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { incrementInterview, addActivity } = useUserData();
+  const payment = usePayment() as any;
   const [stage, setStage] = useState<"setup" | "interview" | "complete">("setup");
   const [role, setRole] = useState("Software Engineer");
   const [company, setCompany] = useState("Google");
@@ -45,6 +49,8 @@ export default function InterviewScreen() {
   const bottomInset = Platform.OS === "web" ? 34 : insets.bottom;
 
   const startInterview = async () => {
+    const allowed = await payment.checkAndConsumerial();
+    if (!allowed) { router.push("/paywall" as any); return; }
     setIsLoading(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
