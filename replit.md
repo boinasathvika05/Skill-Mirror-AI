@@ -33,8 +33,7 @@ A comprehensive AI-powered developer skills platform built with Expo React Nativ
 11. **Payment System** — 3 free trial AI calls, then premium ($9.99/mo or $59.99/yr)
 
 ## Admin Account
-- Username: `admin`
-- Password: `Admin@123`
+
 - Admin redirected to `/(admin)` dashboard, blocked from regular tabs
 - Regular users blocked from `/(admin)` routes
 
